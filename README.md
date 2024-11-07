@@ -1,2 +1,2 @@
-# fundrich_query_tools
-基富通 (FundRich) 基金資訊查詢工具
+# 基富通 (FundRich) 基金資訊查詢工具
+靜態頁面串接基富通 api 輔助查詢基金相關資訊做簡易比較與加總
