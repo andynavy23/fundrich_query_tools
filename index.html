@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>基富通 基金資產配置查詢工具</title>
+    <style>
+        /* 全域樣式 */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            background-color: #cdd7e7;
+            color: #333;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 30px 70px;
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        h2 {
+            font-size: 1.6rem;
+            color: #333;
+            margin-bottom: 20px;
+        }
+        label {
+            font-size: 0.95rem;
+            color: #555;
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 10px 15px;
+            margin-top: 8px;
+            margin-bottom: 8px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+            font-size: 1rem;
+        }
+        input[type="number"] {
+            padding: 5px 10px;
+            margin-top: 8px;
+            margin-bottom: 5px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+            font-size: 1rem;
+        }
+        input[type=radio] {
+            border: 0px;
+            height: 20px;
+            width: 20px;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #0073e6;
+            color: #fff;
+            font-size: 1rem;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.2s ease-in-out;
+            box-shadow: 0 2px 6px rgba(0, 115, 230, 0.3);
+        }
+        button:hover {
+            background-color: #005bb5;
+        }
+        .info {
+            color: #8a8989;
+            font-size: 0.9rem;
+            text-align:center;
+        }
+        .error {
+            color: #d9534f;
+            font-size: 0.9rem;
+        }
+        /* 表格樣式 */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            font-size: 0.95rem;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+        }
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+        }
+        th {
+            background-color: #f4f6f9;
+            color: #555;
+            font-weight: 600;
+            border-bottom: 1px solid #e6e8eb;
+        }
+        td {
+            border-bottom: 1px solid #e6e8eb;
+            color: #333;
+        }
+        tr:last-child td {
+            border-bottom: none;
+        }
+        /* 表格每列的 Hover 效果 */
+        tr:hover td {
+            background-color: #f0f4f8;
+        }
+        /* 表格欄位分隔 */
+        th:first-child, td:first-child {
+            padding-left: 20px;
+        }
+        th:last-child, td:last-child {
+            padding-right: 20px;
+        }
+        #autoFillDiv {
+            display: flex;
+            overflow-x: auto;
+            gap: 20px; /* 按鈕之間的間距 */
+            padding-top: 10px;
+            padding-bottom: 12px; /* 防止滑動時表格被遮擋 */
+            scroll-behavior: smooth; /* 平滑滑動效果 */
+        }
+        #featuresDiv {
+            display: flex;
+            overflow-x: auto;
+            gap: 20px; /* 表格之間的間距 */
+            padding-bottom: 10px; /* 防止滑動時表格被遮擋 */
+            scroll-behavior: smooth; /* 平滑滑動效果 */
+            margin-top: 10px;
+            margin-bottom: 5px;
+        }
+        #featuresDiv div {
+            display: flex;
+            align-items: center;
+        }
+        #submit_btn {
+            width: 40%;
+            margin-left: 30%;
+            margin-right: 30%;
+        }
+        .hr-edge-weak {
+            border: 0;
+            padding-top: 1px;
+            background: linear-gradient(to right, transparent, #d0d0d5, transparent);
+        }
+        #splitTableDiv {
+            display: flex;
+            overflow-x: auto;
+            gap: 20px; /* 表格之間的間距 */
+            padding-bottom: 10px; /* 防止滑動時表格被遮擋 */
+            scroll-behavior: smooth; /* 平滑滑動效果 */
+        }
+        #splitTableDiv table {
+            min-width: 300px; /* 每個表格的最小寬度 */
+            max-width: 100%; /* 防止表格過寬 */
+            border-collapse: collapse;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+        }
+        /* Modal Overlay */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.4);
+            display: none;
+            z-index: 10;
+        }
+        /* Modal Content */
+        .modal-content {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 80%;
+            max-width: 500px;
+            background: #fff;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            z-index: 20;
+            display: none;
+        }
+        /* Modal Title */
+        .modal-content h2 {
+            margin-top: 0;
+            font-size: 1.4rem;
+            color: #333;
+        }
+        /* Modal Input Field */
+        .modal-content input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+        /* Modal Button */
+        .modal-content button {
+            display: inline-block;
+            width: 100%;
+            padding: 10px;
+            margin-top: 10px;
+            background-color: #0073e6;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            box-shadow: 0 2px 6px rgba(0, 115, 230, 0.3);
+            transition: background-color 0.2s ease-in-out;
+        }
+        .modal-content button:hover {
+            background-color: #005bb5;
+        }
+        /* Data Display Box */
+        .data-display {
+            margin-top: 15px;
+            padding: 15px;
+            background-color: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            color: #555;
+            display: flex;
+            overflow-x: auto;
+            gap: 20px; /* 表格之間的間距 */
+            padding-bottom: 10px; /* 防止滑動時表格被遮擋 */
+            scroll-behavior: smooth; /* 平滑滑動效果 */
+        }
+        .fund-div {
+            min-width: 200px; /* 每個表格的最小寬度 */
+            max-width: 100%; /* 防止表格過寬 */
+            border-collapse: collapse;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+            padding: 15px;
+            background-color: #ffffff;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2 id="featureTitle">基金 詳細資訊 查詢</h2>
+        <button id="submit_btn" onclick="openModal()">查詢</button>
+        <hr class="hr-edge-weak">
+        <h2 id="featureTitle">基金 前十大持股 查詢</h2>
+        <label>自動填入 基金數量 :</label>
+        <input type="number" id="fundNum" min="1" max="10" value="5" /><br>
+        <label>自動填入 境內全市場 基金列表選項 :</label>
+        <div id="autoFillDiv">
+            <button onclick="fetchTopStockType('股票型')">股票型</button>
+            <button onclick="fetchTopStockType('平衡型')">平衡型</button>
+            <button onclick="fetchTopStockType('固定收益型')">固定收益型</button>
+            <button onclick="fetchTopStockType('組合型')">組合型</button>
+            <button onclick="fetchTopStockType('不動產證券化型')">不動產證卷化型</button>
+        </div>
+        <label for="fundInput">基金 ID (使用逗號分隔多個例如: UNI005, FUB045, ESI109) :</label><br>
+        <input type="text" id="fundInput" />
+        <label>查詢選項 :</label>
+        <div id="featuresDiv">
+            <div>
+                <input id="featureOption1" name="featureOptions" type="radio" value="前十大持股" checked="checked">
+                <label for="featureOption1">前十大持股</label>
+            </div>
+            <div>
+                <input id="featureOption2" name="featureOptions" type="radio" value="投資類別">
+                <label for="featureOption2">投資類別</label>
+            </div>
+            <div>
+                <input id="featureOption3" name="featureOptions" type="radio" value="投資產業">
+                <label for="featureOption3">投資產業</label>
+            </div>
+            <div>
+                <input id="featureOption4" name="featureOptions" type="radio" value="投資區域">
+                <label for="featureOption4">投資區域</label>
+            </div>
+        </div>
+        <button id="submit_btn" onclick="submitQuery()">查詢</button>
+        <hr class="hr-edge-weak">
+        <p id="info" class="info"></p>
+        <p id="error" class="error"></p>
+        <div id="apiDiv"></div>
+        <div id="summaryDiv"></div>
+    </div>
+    <!-- Modal Overlay -->
+    <div id="modalOverlay" class="modal-overlay" onclick="closeModal()"></div>
+    <!-- Modal Content -->
+    <div id="modalContent" class="modal-content">
+        <h2>輸入基金 ID</h2>
+        <label for="modalInput">(使用逗號分隔多個例如: UNI005, FUB045, ESI109)</label>
+        <input type="text" id="modalInput">
+        <button onclick="submitModalQuery()">提交</button>
+        <!-- Display Box for Key-Value Data -->
+        <hr class="hr-edge-weak">
+        <p id="modalInfo" class="info"></p>
+        <p id="modalError" class="error"></p>
+        <div id="dataDisplayDiv" class="data-display">
+            <p>基金的資料將顯示在此處</p>
+        </div>
+    </div>
+
+    <script>
+        // 初始化 基金 ID 輸入框，從 localStorage 載入上次輸入的值
+        document.getElementById('fundInput').value = localStorage.getItem('fundIds') || '';
+        const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+        // 監聽 查詢選項變更事件
+        if (document.querySelector('input[name="featureOptions"]')) {
+            document.querySelectorAll('input[name="featureOptions"]').forEach((elem) => {
+                elem.addEventListener("click", function(event) {
+                    const queryMethod = document.querySelector('input[name="featureOptions"]:checked').value;
+                    document.getElementById('featureTitle').textContent = `基金 ${queryMethod} 查詢`;
+                });
+            });
+        }
+
+        function cleanError() {
+            document.getElementById('error').textContent = '';
+        }
+
+        function cleanInfo() {
+            document.getElementById('info').textContent = '';
+        }
+
+        function cleanAll() {
+            cleanError();
+            document.getElementById('apiDiv').innerHTML = '';
+            document.getElementById('summaryDiv').innerHTML = '';
+        }
+
+        function cleanModalError() {
+            document.getElementById('modalError').textContent = '';
+        }
+
+        function cleanModalInfo() {
+            document.getElementById('modalInfo').textContent = '';
+        }
+
+        function cleanModalAll() {
+            cleanModalError();
+            document.getElementById('dataDisplayDiv').innerHTML = '';
+        }
+
+        function setError(message) {
+            document.getElementById('error').textContent = message;
+            cleanInfo();
+        }
+
+        function setInfo(message) {
+            document.getElementById('info').textContent = message;
+        }
+
+        function setModalError(message) {
+            document.getElementById('modalError').textContent = message;
+            cleanModalInfo();
+        }
+
+        function setModalInfo(message) {
+            document.getElementById('modalInfo').textContent = message;
+        }
+
+        async function submitQuery() {
+            const queryMethod = document.querySelector('input[name="featureOptions"]:checked').value;
+            document.getElementById('fundInput').textContent = '';
+            document.getElementById('featureTitle').textContent = `基金 ${queryMethod}查詢`;
+            await fetchAndRenderFundsData(queryMethod);
+        }
+
+        // Open Modal
+        function openModal() {
+            document.getElementById('modalOverlay').style.display = 'block';
+            document.getElementById('modalContent').style.display = 'block';
+            const fundInput = document.getElementById('fundInput').value;
+            document.getElementById('modalInput').value = fundInput;
+        }
+
+        // Close Modal
+        function closeModal() {
+            document.getElementById('modalOverlay').style.display = 'none';
+            document.getElementById('modalContent').style.display = 'none';
+        }
+
+        // Submit Data in Modal
+        async function submitModalQuery() {
+            setModalInfo('正在查詢...');
+            const modalInput = document.getElementById('modalInput').value.trim();
+            const fundIds = modalInput.split(',').map(id => id.trim()).filter(Boolean);
+            cleanModalAll();
+            const fundsDetails = await fetchFundsDetails(fundIds);
+            renderModalFundsData(fundsDetails);
+            setModalInfo(`基金 詳細資料 查詢完成`);
+        }
+
+        // 新台幣 前一個月 基金規模由高到低 第1~3頁 基金列表
+        async function fetchTopStockType(stockType) {
+            try {
+                setInfo('正在查詢...');
+                const fundNum = document.getElementById('fundNum').value;
+                let fundIds = [];
+                for (let page = 1; page <= 3; page++) {
+                    const payload = {
+                        "data": {
+                            "area": "A",
+                            "type": stockType,
+                            "currency": "TWD",
+                            "dataPeriod": "b1m",
+                            "sort": "scale_desc",
+                            "page": page.toString(),
+                        }
+                    }
+                    const response = await fetch("https://apis.fundrich.com.tw/FRSDataCenter/Home/FundWatcherInquire", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"
+                        },
+                        body: JSON.stringify(payload)
+                    });
+
+                    const data = await response.json();
+                    if (data.status !== 0) {
+                        throw new Error(`${stockType} 新台幣 前一個月 基金規模由高到低 第${page.toString()}頁 抓取失敗: ${data.msg}`);
+                    }
+                    const tempFundIds = data.data.result.filter((item) => item.isSell).map((item) => {
+                        return item.fundId;
+                    });
+                    for (let i = 0; i < tempFundIds.length; i++) {
+                        if (fundIds.length == fundNum) { break; }
+                        fundIds.push(tempFundIds[i]);
+                    }
+                    await sleep(200);
+                };
+                document.getElementById('fundInput').value = fundIds.join(', ');
+                setInfo(`${stockType} 新台幣 前一個月 基金規模由高到低 第1~3頁 基金列表 已填入`);
+            } catch (error) {
+                setError(error.message);
+            }
+        }
+
+        async function fetchAndRenderFundsData(queryMethod) {
+            setInfo('正在查詢...');
+            const fundInput = document.getElementById('fundInput').value.trim();
+            const fundIds = fundInput.split(',').map(id => id.trim()).filter(Boolean);
+            if (fundIds.length === 0) return;
+
+            localStorage.setItem('fundIds', fundInput); // 儲存輸入到 localStorage
+            cleanAll();
+
+            let fetchData;
+            if (queryMethod == "前十大持股") {
+                fetchData = await fetchFundsTop10Assets(fundIds);
+            } else if (queryMethod == "投資類別") {
+                fetchData = await fetchFundsInvestmentCategory(fundIds);
+            } else if (queryMethod == "投資產業") {
+                fetchData = await fetchFundsInvestmentDuty(fundIds);
+            } else if (queryMethod == "投資區域") {
+                fetchData = await fetchFundsInvestmentCountry(fundIds);
+            }
+
+            setInfo(`基金 ${queryMethod}資料 查詢完成`);
+            renderFundsData(queryMethod, fetchData.fundResults, fetchData.allHoldings);
+        }
+
+        // 查詢 基金 詳細資料
+        async function fetchFundsDetails(fundIds) {
+            let fundsDetails = [];
+
+            try {
+                for (let fundId of fundIds) {
+                    const response = await fetch("https://apis.fundrich.com.tw/FRSDataCenter/GetFundDetail", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"
+                        },
+                        body: JSON.stringify({ data: { fundId: fundId } })
+                    });
+
+                    const data = await response.json();
+                    if (data.status !== 0) {
+                        throw new Error(`基金 ID ${fundId} 查詢失敗: ${data.msg}`);
+                    }
+
+                    fundsDetails.push({
+                        fundId: data.data.fundId,
+                        fundCName: data.data.cName,
+                        fundEName: data.data.eName,
+                        fundPrice: data.data.newPrice,
+                        fundCurrency: data.data.newPriceCurrency,
+                        fundRiskId: data.data.riskId,
+                        fundRiskName: data.data.riskName,
+                    });
+                    await sleep(200);
+                }
+            } catch (error) {
+                setModalError(error.message);
+            }
+            return fundsDetails;
+        }
+
+        // 查詢 基金 前十大持股資料
+        async function fetchFundsTop10Assets(fundIds) {
+            const allHoldings = {}; // 用於存儲所有持股資料並彙總重複持股
+            const fundResults = {};
+
+            try {
+                for (let fundId of fundIds) {
+                    const response = await fetch("https://apis.fundrich.com.tw/FRSDataCenter/GetFundShareholdingTop10", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"
+                        },
+                        body: JSON.stringify({ data: { fundId: fundId } })
+                    });
+
+                    const data = await response.json();
+                    if (data.status !== 0) {
+                        throw new Error(`基金 ID ${fundId} 查詢失敗: ${data.msg}`);
+                    }
+
+                    fundResults[fundId] = data.data.investmentTargets.map((item) => {
+                        return {
+                            name: item.investmentTarget,
+                            percent: item.percent
+                        };
+                    });
+                    data.data.investmentTargets.forEach(item => {
+                        const name = item.investmentTarget;
+                        const percent = parseFloat(item.percent.replace('%', ''));
+                        if (allHoldings[name]) {
+                            allHoldings[name] += percent;
+                        } else {
+                            allHoldings[name] = percent;
+                        }
+                    });
+                    await sleep(200);
+                }
+            } catch (error) {
+                setError(error.message);
+            }
+            return {
+                allHoldings: allHoldings,
+                fundResults: fundResults
+            }
+        }
+
+        // 查詢 基金 投資類別
+        async function fetchFundsInvestmentCategory(fundIds) {
+            const allHoldings = {}; // 用於存儲所有持股資料並彙總重複持股
+            const fundResults = {};
+
+            try {
+                for (let fundId of fundIds) {
+                    const response = await fetch("https://apis.fundrich.com.tw/FRSDataCenter/GetFundInvestmentCategory", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"
+                        },
+                        body: JSON.stringify({ data: { fundId: fundId } })
+                    });
+
+                    const data = await response.json();
+                    if (data.status !== 0) {
+                        throw new Error(`基金 ID ${fundId} 查詢失敗: ${data.msg}`);
+                    }
+
+                    fundResults[fundId] = data.data.categories.map((item) => {
+                        return {
+                            name: item.category,
+                            percent: item.percent
+                        };
+                    });
+                    data.data.categories.forEach(item => {
+                        const name = item.category;
+                        const percent = parseFloat(item.percent.replace('%', ''));
+                        if (allHoldings[name]) {
+                            allHoldings[name] += percent;
+                        } else {
+                            allHoldings[name] = percent;
+                        }
+                    });
+                    await sleep(200);
+                }
+            } catch (error) {
+                setError(error.message);
+            }
+            return {
+                allHoldings: allHoldings,
+                fundResults: fundResults
+            }
+        }
+
+        // 查詢 基金 投資產業
+        async function fetchFundsInvestmentDuty(fundIds) {
+            const allHoldings = {}; // 用於存儲所有持股資料並彙總重複持股
+            const fundResults = {};
+
+            try {
+                for (let fundId of fundIds) {
+                    const response = await fetch("https://apis.fundrich.com.tw/FRSDataCenter/GetFundInvestmentDuty", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"
+                        },
+                        body: JSON.stringify({ data: { fundId: fundId } })
+                    });
+
+                    const data = await response.json();
+                    if (data.status !== 0) {
+                        throw new Error(`基金 ID ${fundId} 查詢失敗: ${data.msg}`);
+                    }
+
+                    fundResults[fundId] = data.data.dutys.map((item) => {
+                        return {
+                            name: item.duty,
+                            percent: item.percent
+                        };
+                    });
+                    data.data.dutys.forEach(item => {
+                        const name = item.duty;
+                        const percent = parseFloat(item.percent.replace('%', ''));
+                        if (allHoldings[name]) {
+                            allHoldings[name] += percent;
+                        } else {
+                            allHoldings[name] = percent;
+                        }
+                    });
+                    await sleep(200);
+                }
+            } catch (error) {
+                setError(error.message);
+            }
+            return {
+                allHoldings: allHoldings,
+                fundResults: fundResults
+            }
+        }
+
+        // 查詢 基金 投資區域
+        async function fetchFundsInvestmentCountry(fundIds) {
+            const allHoldings = {}; // 用於存儲所有持股資料並彙總重複持股
+            const fundResults = {};
+
+            try {
+                for (let fundId of fundIds) {
+                    const response = await fetch("https://apis.fundrich.com.tw/FRSDataCenter/GetFundInvestmentCountry", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"
+                        },
+                        body: JSON.stringify({ data: { fundId: fundId } })
+                    });
+
+                    const data = await response.json();
+                    if (data.status !== 0) {
+                        throw new Error(`基金 ID ${fundId} 查詢失敗: ${data.msg}`);
+                    }
+
+                    fundResults[fundId] = data.data.countries.map((item) => {
+                        return {
+                            name: item.country,
+                            percent: item.percent
+                        };
+                    });
+                    data.data.countries.forEach(item => {
+                        const name = item.country;
+                        const percent = parseFloat(item.percent.replace('%', ''));
+                        if (allHoldings[name]) {
+                            allHoldings[name] += percent;
+                        } else {
+                            allHoldings[name] = percent;
+                        }
+                    });
+                    await sleep(200);
+                }
+            } catch (error) {
+                setError(error.message);
+            }
+            return {
+                allHoldings: allHoldings,
+                fundResults: fundResults
+            }
+        }
+
+        // 基金 資料 顯示在網頁上
+        function renderFundsData(queryMethod, fundResults, allHoldings) {
+
+            // 基金 前十大持股
+            const apiDiv = document.getElementById('apiDiv');
+            const splitTableDiv = document.createElement('div');
+            splitTableDiv.id = 'splitTableDiv';
+            for (const [fundId, holdings] of Object.entries(fundResults)) {
+                const table = document.createElement('table');
+                table.innerHTML = `<tr><th colspan="2">基金 ID: ${fundId} ${queryMethod}</th></tr>`;
+                holdings.forEach(h => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `<td>${h.name}</td><td>${h.percent}</td>`;
+                    table.appendChild(row);
+                });
+                splitTableDiv.appendChild(table);
+            }
+            apiDiv.appendChild(splitTableDiv);
+
+            // 彙總重複持股
+            const summaryDiv = document.getElementById('summaryDiv');
+            const summaryTableDiv = document.createElement('div');
+            summaryTableDiv.id = 'summaryTableDiv';
+            const summaryTable = document.createElement('table');
+            summaryTable.innerHTML = `<tr><th>重複${queryMethod}名稱</th><th>總和 (%)</th></tr>`;
+            Object.entries(allHoldings).forEach(([name, percent]) => {
+                const row = document.createElement('tr');
+                row.innerHTML = `<td>${name}</td><td>${percent.toFixed(2)}%</td>`;
+                summaryTable.appendChild(row);
+            });
+            summaryTableDiv.appendChild(summaryTable);
+            summaryDiv.appendChild(summaryTableDiv);
+        }
+
+        function renderModalFundsData(fundsDetails) {
+            const dataDisplayDiv = document.getElementById('dataDisplayDiv');
+            for (const fundsDetail of fundsDetails) {
+                const fundDiv = document.createElement('div');
+                fundDiv.className = 'fund-div';
+                const fundIdP = document.createElement('p');
+                const fundCNameP = document.createElement('p');
+                const fundPriceP = document.createElement('p');
+                const fundRiskP = document.createElement('p');
+
+                fundIdP.textContent = `基金 ID: ${fundsDetail.fundId}`;
+                fundCNameP.textContent = `基金名稱: ${fundsDetail.fundCName}`;
+                fundPriceP.textContent = `基金淨值: ${fundsDetail.fundPrice} ${fundsDetail.fundCurrency}`;
+                fundRiskP.textContent = `風險等級: ${fundsDetail.fundRiskId} ${fundsDetail.fundRiskName}`;
+
+                fundDiv.appendChild(fundIdP);
+                fundDiv.appendChild(fundCNameP);
+                fundDiv.appendChild(fundPriceP);
+                fundDiv.appendChild(fundRiskP);
+                dataDisplayDiv.appendChild(fundDiv);
+            }
+        }
+    </script>
+</body>
+</html>
