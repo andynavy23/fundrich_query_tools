@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta property="og:title" content="基富通 基金資產配置查詢工具">
     <meta property="og:description" content="">
-    <title>基富通 基金資產配置查詢工具</title>>
+    <title>基富通 基金資產配置查詢工具</title>
     <style>
         /* 全域樣式 */
         body {
@@ -138,6 +138,25 @@
             display: flex;
             align-items: center;
         }
+        #detailTitle {
+            display: inline-block;
+            width: 80%;
+        }
+        #tutorial_btn {
+            display: inline-block;
+            width: 10%;
+            color: #2c2f64;
+            background-color: #bbc0c5;
+            transition: background-color 0.2s ease-in-out;
+        }
+        #tutorial_btn:hover {
+            background-color: #909599;
+        }
+        #submit_detail_btn {
+            width: 40%;
+            margin-left: 30%;
+            margin-right: 30%;
+        }
         #submit_btn {
             width: 40%;
             margin-left: 30%;
@@ -251,10 +270,19 @@
 </head>
 <body>
     <div class="container">
-        <h2 id="detailTitle">基金 詳細資訊 查詢</h2>
-        <button id="submit_btn" onclick="openModal()">查詢</button>
+        <div id="tutorialDiv" class="data-display" style="display: none;">
+            <p>- 基金 詳細資訊 查詢 會開啟互動視窗並自動填上 基金 ID 值供查詢, 關閉時會更新 基金 ID</p>
+            <p>- 可以 單一基金 查詢 前十大持股/投資類別/投資產業/投資區域</p>
+            <p>- 可以 多個基金(使用逗號分隔) 查詢 前十大持股/投資類別/投資產業/投資區域</p>
+            <p>- 如無明確基金要查詢, 可以選擇 自動填入, 會從 基富通 抓取 基金列表</p>
+        </div>
+        <div>
+            <h2 id="detailTitle">基金 詳細資訊 查詢</h2>
+            <button id="tutorial_btn" onclick="switchTutorial()">說明</button>
+        </div>
+        <button id="submit_detail_btn" onclick="openModal()">查詢</button>
         <hr class="hr-edge-weak">
-        <h2 id="featureTitle">基金 前十大持股 查詢</h2>
+        <h2 id="autoFillTitle">自動填入 基金 ID</h2>
         <label>自動填入 基金數量 :</label>
         <input type="number" id="fundNum" min="1" max="10" value="5" /><br>
         <label>自動填入 境內全市場 基金列表選項 :</label>
@@ -265,8 +293,8 @@
             <button onclick="fetchTopStockType('組合型')">組合型</button>
             <button onclick="fetchTopStockType('不動產證券化型')">不動產證卷化型</button>
         </div>
-        <label for="fundInput">基金 ID (使用逗號分隔多個例如: UNI005, FUB045, ESI109) :</label><br>
-        <input type="text" id="fundInput" />
+        <hr class="hr-edge-weak">
+        <h2 id="featureTitle">基金 前十大持股 查詢</h2>
         <label>查詢選項 :</label>
         <div id="featuresDiv">
             <div>
@@ -286,6 +314,8 @@
                 <label for="featureOption4">投資區域</label>
             </div>
         </div>
+        <label for="fundInput">基金 ID (使用逗號分隔多個例如: UNI005, FUB045, ESI109) :</label><br>
+        <input type="text" id="fundInput" />
         <button id="submit_btn" onclick="submitQuery()">查詢</button>
         <hr class="hr-edge-weak">
         <p id="info" class="info"></p>
@@ -377,6 +407,15 @@
             await fetchAndRenderFundsData(queryMethod);
         }
 
+        // Open/Close tutorial
+        function switchTutorial() {
+            if (document.getElementById('tutorialDiv').style.display === 'block') {
+                document.getElementById('tutorialDiv').style.display = 'none';
+            } else {
+                document.getElementById('tutorialDiv').style.display = 'block';
+            }
+        }
+
         // Open Modal
         function openModal() {
             document.getElementById('modalOverlay').style.display = 'block';
@@ -389,6 +428,8 @@
         function closeModal() {
             document.getElementById('modalOverlay').style.display = 'none';
             document.getElementById('modalContent').style.display = 'none';
+            const modalInput = document.getElementById('modalInput').value;
+            document.getElementById('fundInput').value = modalInput;
         }
 
         // Submit Data in Modal
